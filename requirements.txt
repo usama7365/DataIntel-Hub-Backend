@@ -24,7 +24,7 @@ python-dotenv
 sqlalchemy
 alembic
 psycopg2-binary
-pymongo
+pymongo>=4.0.0
 
 # AWS and file handling
 boto3
@@ -44,4 +44,5 @@ PyYAML
 # JWT and security
 python-jose[cryptography]
 
-motor==3.3.2
+pymongo>=4.0.0
+motor>=3.3.1

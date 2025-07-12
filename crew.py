@@ -1,9 +1,6 @@
 import warnings
 warnings.filterwarnings('ignore')
 
-from utils import load_env
-load_env()
-
 import os
 import yaml
 import argparse
@@ -36,42 +33,50 @@ def create_csv_tool(file_path):
     print("Processing file:", file_path)
     return FileReadTool(file_path=file_path)
 
-# Creating Agents
-suggestion_generation_agent = Agent(
-  config=agents_config['suggestion_generation_agent'],
-  tools=[create_csv_tool]  # We'll pass the file path when creating the tool
-)
+# Creating Agents - will be created dynamically with proper tools
+def create_suggestion_generation_agent(file_path):
+    csv_tool = create_csv_tool(file_path)
+    return Agent(
+        config=agents_config['suggestion_generation_agent'],
+        tools=[csv_tool]
+    )
 
-reporting_agent = Agent(
-  config=agents_config['reporting_agent'],
-  tools=[create_csv_tool]  # We'll pass the file path when creating the tool
-)
+def create_reporting_agent(file_path):
+    csv_tool = create_csv_tool(file_path)
+    return Agent(
+        config=agents_config['reporting_agent'],
+        tools=[csv_tool]
+    )
 
-chart_generation_agent = Agent(
-  config=agents_config['chart_generation_agent'],
-  allow_code_execution=True
-)
+def create_chart_generation_agent():
+    return Agent(
+        config=agents_config['chart_generation_agent'],
+        allow_code_execution=False  # Disable code execution to avoid Docker dependency
+    )
 
 # Creating Tasks
 def create_tasks(file_path):
-    csv_tool = create_csv_tool(file_path)
+    # Create agents with proper tools
+    suggestion_generation_agent = create_suggestion_generation_agent(file_path)
+    reporting_agent = create_reporting_agent(file_path)
+    chart_generation_agent = create_chart_generation_agent()
     
     suggestion_generation = Task(
       config=tasks_config['suggestion_generation'],
       agent=suggestion_generation_agent,
-      context={"csv_file_path": file_path}
+      context=[]
     )
 
     table_generation = Task(
       config=tasks_config['table_generation'],
       agent=reporting_agent,
-      context={"csv_file_path": file_path}
+      context=[]
     )
 
     chart_generation = Task(
       config=tasks_config['chart_generation'],
       agent=chart_generation_agent,
-      context={"csv_file_path": file_path}
+      context=[]
     )
 
     final_report_assembly = Task(
@@ -85,6 +90,11 @@ def create_tasks(file_path):
 # Creating Crew
 def create_crew(file_path):
     tasks = create_tasks(file_path)
+    
+    # Create agents with proper tools
+    suggestion_generation_agent = create_suggestion_generation_agent(file_path)
+    reporting_agent = create_reporting_agent(file_path)
+    chart_generation_agent = create_chart_generation_agent()
     
     report_crew = Crew(
       agents=[

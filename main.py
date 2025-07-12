@@ -20,13 +20,16 @@ load_dotenv()
 app = FastAPI(
     title="DataIntel Hub API",
     description="A FastAPI backend for DataIntel Hub",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/swagger",         # Change Swagger UI path
+    redoc_url="/redoc",          # Change Redoc path
+    openapi_url="/openapi.json"  # Change OpenAPI schema path
 )
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure this properly for production
+    allow_origins=["http://localhost:5173"],  # Allow frontend origin for local dev
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

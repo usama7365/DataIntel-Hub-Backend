@@ -13,18 +13,21 @@ from bson import ObjectId
 load_dotenv()
 
 # MongoDB connection
-MONGO_URI = "mongodb+srv://shuaib:shuaib123@cluster0.3ka8vsg.mongodb.net/data-intel-hub"
+MONGO_URI = os.getenv("MONGO_URI")
 client = AsyncIOMotorClient(MONGO_URI)
 db = client.data_intel_hub
 users_collection = db.users
 
 class UserBase(BaseModel):
     """Base user model"""
-    first_name: str = Field(..., description="User's first name")
-    last_name: str = Field(..., description="User's last name")
+    first_name: str = Field(..., alias="firstName", description="User's first name")
+    last_name: str = Field(..., alias="lastName", description="User's last name")
     email: EmailStr = Field(..., description="User's email address")
     password: str = Field(..., min_length=8, description="User's password")
     role: str = Field(default="user", description="User's role")
+
+    class Config:
+        allow_population_by_field_name = True
 
 class UserCreate(UserBase):
     """Model for creating a new user"""
@@ -32,10 +35,13 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """Model for updating user information"""
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    first_name: Optional[str] = Field(None, alias="firstName")
+    last_name: Optional[str] = Field(None, alias="lastName")
     email: Optional[EmailStr] = None
     role: Optional[str] = None
+
+    class Config:
+        allow_population_by_field_name = True
 
 class UserResponse(BaseModel):
     """Model for user response"""
@@ -220,3 +226,20 @@ class User:
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
         return hashed.decode('utf-8') 
+
+class LoginRequest(BaseModel):
+    email: EmailStr = Field(..., description="User's email address")
+    password: str = Field(..., min_length=8, description="User's password")
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr = Field(..., description="User's email address")
+
+class ResetPasswordRequest(BaseModel):
+    password: str = Field(..., min_length=8, description="New password")
+
+class UpdatePasswordRequest(BaseModel):
+    old_password: str = Field(..., min_length=8, description="Current password")
+    new_password: str = Field(..., min_length=8, description="New password")
+
+class ResendEmailRequest(BaseModel):
+    email: EmailStr = Field(..., description="User's email address") 
