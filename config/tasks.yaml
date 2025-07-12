@@ -1,0 +1,72 @@
+suggestion_generation:
+  description: >
+    Generate actionable suggestions for resolving each identified issue or improving outcomes based on the analysis of the provided data.
+    Base your suggestions on:
+    - The specific characteristics or type of each issue.
+    - Relevant historical data and trends present in the dataset.
+    - Any available feedback or comments associated with the data.
+
+    The goal is to provide clear, practical steps that can be taken to address each issue efficiently and effectively, regardless of the data domain.
+    
+  expected_output: >
+      A list of actionable suggestions linked to each identified issue or data category, optimized for quick and effective resolution or improvement by the relevant team.
+
+table_generation:
+  description: >
+    Generate tables that summarize the key metrics and trends observed in the provided data. Ensure that accurate statistics are presented in a clear and structured format 
+     For each important category, metric, or entity in the dataset, create a table that highlights relevant statistics, comparisons, or trends.
+      Examples of tables include:
+      - Classification results: A table summarizing the frequency and distribution of different categories or types.
+      - Performance metrics: A table showing performance or outcome measures for relevant groups or entities.
+      - Satisfaction or feedback: A table summarizing ratings, feedback, or other qualitative measures over time or by group.
+
+    These tables will serve as the foundation for generating charts in the next
+    task.
+  expected_output: >
+    A set of tables summarizing the key metrics and trends observed in the data, ready to be used for chart generation.
+
+chart_generation:
+  description: >
+    Generate relevant charts (3 to 5) based on the summary tables provided by the previous task.
+    For each key metric or category in the data, create an appropriate chart to visualize trends, distributions, or comparisons.
+    Examples of charts include:
+    - Distribution charts for categorical data (e.g., bar or pie charts for category frequencies)
+    - Trend lines for time series data (e.g., line charts for metrics over time)
+    - Comparative charts for performance metrics (e.g., bar charts comparing groups or entities)
+    - Any other chart type that best represents the underlying data
+
+    Save the charts as image files in the a folder in a current directory called 'charts'.
+
+    Ensure that the charts are saved as image files, and generate URLs for these
+    images so they can be easily embedded into the final report.
+  expected_output: >
+    A set of charts that visually represent the key metrics and trends observed
+    in the data, ready to be integrated into the final report.
+
+final_report_assembly:
+  description: >
+    Assemble the final report by integrating the tables and charts generated in the previous tasks. The report should include:
+    - Key Findings: Overview of the main categories, metrics, or entities analyzed, with their frequency and distribution, presented in tables and charts.
+    - Performance Insights: Analysis of performance or outcome measures for relevant groups or entities, presented in tables and charts.
+    - Satisfaction or Feedback: A summary of satisfaction ratings, feedback, or qualitative measures and their trends over time, presented in tables and charts.
+    - Suggested Actions: A summary of the actionable suggestions generated for each identified issue or data category.
+
+    The report should have tables and relevant charts side by side with an
+    appropriate size.
+
+    The report should be formatted for easy consumption by stakeholders,
+    providing valuable insights into the performance of the support system and
+    areas for improvement.
+  expected_output: >
+    A comprehensive final report that integrates tables, charts, and actionable
+    insights into a single document, formatted for stakeholders.
+    Don't add '```' or '```markdown' to the report.
+
+
+
+
+
+
+
+
+
