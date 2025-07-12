@@ -10,7 +10,7 @@ const upload = multer({
       cb(new Error("Only CSV files are allowed"));
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+//   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
 });
 
 module.exports = { upload };

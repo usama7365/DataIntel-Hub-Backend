@@ -1,6 +1,6 @@
 
 const express = require("express");
-const { uploadCSVToS3 } = require("../utils/s3upload.js");
+const { uploadCSVToLocal } = require("../utils/s3upload.js");
 const { upload } = require("../middleware/upload.js");
 const {
     registerUser,
@@ -21,13 +21,16 @@ const router = express.Router();
 
 
 router.post("/upload-csv", upload.single("file"), async (req, res) => {
+    console.log("req.file", req.file);
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const s3Url = await uploadCSVToS3(req.file.buffer, req.file.originalname);
-    res.status(200).json({ message: "Uploaded successfully", url: s3Url });
+    const localFilePath = await uploadCSVToLocal(req.file.buffer, req.file.originalname);
+    
+    console.log("localFilePath", localFilePath);
+    res.status(200).json({ message: "Uploaded successfully", filePath: localFilePath });
   } catch (err) {
     res.status(500).json({ message: err.message || "Upload failed" });
   }
