@@ -12,6 +12,7 @@ from controllers.userController import UserController
 from middleware.authentication import verify_token
 from middleware.error import error_handler
 from routes.userRoutes import user_router
+from controllers.reportController import router as report_router
 
 # Load environment variables
 load_dotenv()
@@ -40,6 +41,7 @@ security = HTTPBearer()
 
 # Include routers
 app.include_router(user_router, prefix="/api/users", tags=["users"])
+app.include_router(report_router, prefix="/api/users", tags=["reports"])
 
 # Root endpoint
 @app.get("/")

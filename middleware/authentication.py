@@ -27,16 +27,20 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
+        print(f"[AUTH] Verifying token: {credentials.credentials[:20]}...")
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("id")
+        print(f"[AUTH] Token verified, user_id: {user_id}")
         if user_id is None:
+            print("[AUTH] No user_id in token payload")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return user_id
-    except JWTError:
+    except JWTError as e:
+        print(f"[AUTH] JWT Error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

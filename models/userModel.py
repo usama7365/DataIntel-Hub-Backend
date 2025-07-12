@@ -27,7 +27,7 @@ class UserBase(BaseModel):
     role: str = Field(default="user", description="User's role")
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 class UserCreate(UserBase):
     """Model for creating a new user"""
@@ -41,7 +41,7 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 class UserResponse(BaseModel):
     """Model for user response"""

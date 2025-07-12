@@ -25,7 +25,11 @@ class GoogleSheetUploadRequest(BaseModel):
     sheet_url: str
 
 @user_router.post("/upload-csv")
-async def upload_csv(file: UploadFile = File(...), file_type: str = Form(...)):
+async def upload_csv(
+    file: UploadFile = File(...), 
+    file_type: str = Form(...),
+    user_id: str = Depends(is_authenticated_user)
+):
     """
     Upload CSV file and process with Python crew
     """
@@ -37,21 +41,50 @@ async def upload_csv(file: UploadFile = File(...), file_type: str = Form(...)):
         if file_type != "csv":
             print(f"[UPLOAD-CSV] Invalid file_type: {file_type}")
             raise HTTPException(status_code=400, detail="file_type must be 'csv'")
+        
         # Save uploaded file to sheet_dump
         file_buffer = await file.read()
         print("[UPLOAD-CSV] Saving file to local sheet_dump...")
         file_path = await upload_csv_to_local(file_buffer, file.filename)
         print(f"[UPLOAD-CSV] File saved at: {file_path}")
+        
         # Call the Python crew function with the uploaded file path
+        import time
+        start_time = time.time()
         python_result = await call_python_crew(file_path)
+        processing_time = time.time() - start_time
         print("[UPLOAD-CSV] Crew result received.")
+        
+        # Create report record
+        from controllers.reportController import create_report_from_analysis
+        import pandas as pd
+        
+        # Get record count from CSV
+        try:
+            df = pd.read_csv(file_path)
+            record_count = len(df)
+        except:
+            record_count = None
+        
+        # Create report record
+        report = await create_report_from_analysis(
+            user_id=user_id,
+            source_type="csv",
+            report_content=python_result,
+            file_path=file_path,
+            file_name=file.filename,
+            record_count=record_count,
+            processing_time=processing_time
+        )
+        
         return JSONResponse(
             status_code=200,
             content={
                 "message": "Uploaded successfully",
                 "fileType": file_type,
                 "filePath": file_path,
-                "crewResult": python_result
+                "crewResult": python_result,
+                "report_id": report.id
             }
         )
     except Exception as e:
@@ -59,7 +92,10 @@ async def upload_csv(file: UploadFile = File(...), file_type: str = Form(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @user_router.post("/upload-google-sheet")
-async def upload_google_sheet(payload: GoogleSheetUploadRequest = Body(...)):
+async def upload_google_sheet(
+    payload: GoogleSheetUploadRequest = Body(...),
+    user_id: str = Depends(is_authenticated_user)
+):
     """
     Accept a Google Sheets URL, fetch as CSV, save to sheet_dump, and process with crew.py
     """
@@ -68,6 +104,7 @@ async def upload_google_sheet(payload: GoogleSheetUploadRequest = Body(...)):
         if payload.file_type != "google_sheet":
             print(f"[UPLOAD-GOOGLE-SHEET] Invalid file_type: {payload.file_type}")
             raise HTTPException(status_code=400, detail="file_type must be 'google_sheet'")
+        
         # Save Google Sheet as CSV to sheet_dump
         import uuid
         unique_name = f"{uuid.uuid4()}.csv"
@@ -75,6 +112,7 @@ async def upload_google_sheet(payload: GoogleSheetUploadRequest = Body(...)):
         sheet_dump_dir = create_sheet_dump_directory()
         file_path = str(sheet_dump_dir / unique_name)
         print(f"[UPLOAD-GOOGLE-SHEET] Downloading Google Sheet to: {file_path}")
+        
         import pandas as pd
         import re
         match = re.search(r'/d/([a-zA-Z0-9-_]+)', payload.sheet_url)
@@ -82,6 +120,7 @@ async def upload_google_sheet(payload: GoogleSheetUploadRequest = Body(...)):
         if not match:
             print("[UPLOAD-GOOGLE-SHEET] Invalid Google Sheet URL.")
             raise HTTPException(status_code=400, detail="Invalid Google Sheet URL")
+        
         file_id = match.group(1)
         gid = gid_match.group(1) if gid_match else '0'
         export_url = f"https://docs.google.com/spreadsheets/d/{file_id}/export?format=csv&gid={gid}"
@@ -89,16 +128,39 @@ async def upload_google_sheet(payload: GoogleSheetUploadRequest = Body(...)):
         df = pd.read_csv(export_url)
         df.to_csv(file_path, index=False)
         print(f"[UPLOAD-GOOGLE-SHEET] File saved at: {file_path}")
+        
         # Call the Python crew function with the saved file path
+        import time
+        start_time = time.time()
         python_result = await call_python_crew(file_path)
+        processing_time = time.time() - start_time
         print("[UPLOAD-GOOGLE-SHEET] Crew result received.")
+        
+        # Create report record
+        from controllers.reportController import create_report_from_analysis
+        
+        # Get record count from DataFrame
+        record_count = len(df)
+        
+        # Create report record
+        report = await create_report_from_analysis(
+            user_id=user_id,
+            source_type="google_sheet",
+            report_content=python_result,
+            file_path=file_path,
+            file_name=f"google_sheet_{file_id}.csv",
+            record_count=record_count,
+            processing_time=processing_time
+        )
+        
         return JSONResponse(
             status_code=200,
             content={
                 "message": "Google Sheet processed successfully",
                 "fileType": payload.file_type,
                 "filePath": file_path,
-                "crewResult": python_result
+                "crewResult": python_result,
+                "report_id": report.id
             }
         )
     except Exception as e:
@@ -194,7 +256,16 @@ async def get_user_details(user_id: str = Depends(is_authenticated_user)):
     """
     Get current user details
     """
+    print(f"[ME] User ID from token: {user_id}")
     return await user_controller.get_user_details(user_id)
+
+@user_router.get("/test-auth")
+async def test_auth(user_id: str = Depends(is_authenticated_user)):
+    """
+    Test authentication endpoint
+    """
+    print(f"[TEST-AUTH] User ID from token: {user_id}")
+    return {"message": "Authentication successful", "user_id": user_id}
 
 @user_router.put("/me/update")
 async def update_user(user_data: UserUpdate, user_id: str = Depends(is_authenticated_user)):
@@ -259,7 +330,10 @@ async def postgres_connect(payload: PostgresConnectRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @user_router.post("/postgres/analyze")
-async def postgres_analyze(payload: PostgresAnalyzeRequest):
+async def postgres_analyze(
+    payload: PostgresAnalyzeRequest,
+    user_id: str = Depends(is_authenticated_user)
+):
     """
     Extract data from selected tables, save as CSV, and process with crew.py
     """
@@ -269,28 +343,54 @@ async def postgres_analyze(payload: PostgresAnalyzeRequest):
         )
         # Combine all selected tables into one DataFrame
         dfs = []
+        total_records = 0
         for table in payload.tables:
             df = extract_table_data(engine, table)
             df['__table__'] = table  # Add table name column for context
             dfs.append(df)
+            total_records += len(df)
+        
         if not dfs:
             raise HTTPException(status_code=400, detail="No tables selected or tables are empty.")
+        
         combined_df = pd.concat(dfs, ignore_index=True)
+        
         # Save to CSV in sheet_dump
         from utils.s3upload import create_sheet_dump_directory
         sheet_dump_dir = create_sheet_dump_directory()
         unique_name = f"{uuid.uuid4()}.csv"
         file_path = str(sheet_dump_dir / unique_name)
         combined_df.to_csv(file_path, index=False)
+        
         # Call crew.py for analysis
+        import time
+        start_time = time.time()
         python_result = await call_python_crew(file_path)
+        processing_time = time.time() - start_time
+        
+        # Create report record
+        from controllers.reportController import create_report_from_analysis
+        
+        # Create report record
+        report = await create_report_from_analysis(
+            user_id=user_id,
+            source_type="postgres",
+            report_content=python_result,
+            file_path=file_path,
+            file_name=f"postgres_tables_{len(payload.tables)}.csv",
+            table_names=payload.tables,
+            record_count=total_records,
+            processing_time=processing_time
+        )
+        
         return JSONResponse(
             status_code=200,
             content={
                 "message": "PostgreSQL table(s) analyzed successfully",
                 "fileType": "postgres",
                 "filePath": file_path,
-                "crewResult": python_result
+                "crewResult": python_result,
+                "report_id": report.id
             }
         )
     except Exception as e:
