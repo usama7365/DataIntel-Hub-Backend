@@ -6,7 +6,42 @@
 #torch==2.0.1
 #matplotlib==3.7.2
 
-crewai==0.75
-crewai_tools==0.13.2
-numpy==1.26.4
-pandas==2.1.3
+# Existing crewai dependencies
+crewai
+crewai_tools
+numpy
+pandas
+
+# FastAPI and web framework dependencies
+fastapi
+uvicorn[standard]
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+
+# Database dependencies
+sqlalchemy
+alembic
+psycopg2-binary
+pymongo
+
+# AWS and file handling
+boto3
+Pillow
+
+# Email handling
+emails
+
+# Additional utilities
+pydantic
+pydantic-settings
+email-validator
+
+# YAML support
+PyYAML
+
+# JWT and security
+python-jose[cryptography]
+
+motor==3.3.2

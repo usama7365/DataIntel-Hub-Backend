@@ -6,6 +6,8 @@ load_env()
 
 import os
 import yaml
+import argparse
+import sys
 from crewai import Agent, Task, Crew
 from crewai_tools import FileReadTool
 from IPython.display import display, Markdown
@@ -31,19 +33,18 @@ tasks_config = configs['tasks']
 
 # FileReadTool for CSV
 def create_csv_tool(file_path):
-    print("coming from nodejs ", file_path)
+    print("Processing file:", file_path)
     return FileReadTool(file_path=file_path)
-csv_tool = create_csv_tool('./sheet_dump/1720790400000.csv')
 
 # Creating Agents
 suggestion_generation_agent = Agent(
   config=agents_config['suggestion_generation_agent'],
-  tools=[csv_tool]
+  tools=[create_csv_tool]  # We'll pass the file path when creating the tool
 )
 
 reporting_agent = Agent(
   config=agents_config['reporting_agent'],
-  tools=[csv_tool]
+  tools=[create_csv_tool]  # We'll pass the file path when creating the tool
 )
 
 chart_generation_agent = Agent(
@@ -52,60 +53,76 @@ chart_generation_agent = Agent(
 )
 
 # Creating Tasks
-suggestion_generation = Task(
-  config=tasks_config['suggestion_generation'],
-  agent=suggestion_generation_agent
-)
+def create_tasks(file_path):
+    csv_tool = create_csv_tool(file_path)
+    
+    suggestion_generation = Task(
+      config=tasks_config['suggestion_generation'],
+      agent=suggestion_generation_agent,
+      context={"csv_file_path": file_path}
+    )
 
-table_generation = Task(
-  config=tasks_config['table_generation'],
-  agent=reporting_agent
-)
+    table_generation = Task(
+      config=tasks_config['table_generation'],
+      agent=reporting_agent,
+      context={"csv_file_path": file_path}
+    )
 
-chart_generation = Task(
-  config=tasks_config['chart_generation'],
-  agent=chart_generation_agent
-)
+    chart_generation = Task(
+      config=tasks_config['chart_generation'],
+      agent=chart_generation_agent,
+      context={"csv_file_path": file_path}
+    )
 
-final_report_assembly = Task(
-  config=tasks_config['final_report_assembly'],
-  agent=reporting_agent,
-  context=[suggestion_generation, table_generation, chart_generation]
-)
+    final_report_assembly = Task(
+      config=tasks_config['final_report_assembly'],
+      agent=reporting_agent,
+      context=[suggestion_generation, table_generation, chart_generation]
+    )
+    
+    return [suggestion_generation, table_generation, chart_generation, final_report_assembly]
 
 # Creating Crew
-report_crew = Crew(
-  agents=[
-    suggestion_generation_agent,
-    reporting_agent,
-    chart_generation_agent
-  ],
-  tasks=[
-    suggestion_generation,
-    table_generation,
-    chart_generation,
-    final_report_assembly
-  ],
-  verbose=True
-)
-
-# def test_crew(n_iterations=1, openai_model_name='gpt-4o'):
-#     return support_report_crew.test(n_iterations=n_iterations, openai_model_name=openai_model_name)
-
-# def train_crew(n_iterations=1, filename='training.pkl'):
-#     return support_report_crew.train(n_iterations=n_iterations, filename=filename)
-
-def kickoff_crew():
-    return report_crew.kickoff()
+def create_crew(file_path):
+    tasks = create_tasks(file_path)
     
+    report_crew = Crew(
+      agents=[
+        suggestion_generation_agent,
+        reporting_agent,
+        chart_generation_agent
+      ],
+      tasks=tasks,
+      verbose=True
+    )
+    
+    return report_crew
+
+def kickoff_crew(file_path):
+    crew = create_crew(file_path)
+    return crew.kickoff()
+
+def main():
+    parser = argparse.ArgumentParser(description='Process CSV file with CrewAI')
+    parser.add_argument('--file-path', type=str, required=True, help='Path to the CSV file to process')
+    
+    args = parser.parse_args()
+    
+    if not os.path.exists(args.file_path):
+        print(f"Error: File {args.file_path} does not exist")
+        sys.exit(1)
+    
+    print("Running Crew...")
+    result = kickoff_crew(args.file_path)
+    print("Crew has been kicked off successfully.")
+    print("Result:", result.raw)
+    
+    # Save the result as a markdown file
+    with open("final_report_3.md", "w", encoding="utf-8") as f:
+        f.write(result.raw)
+    print("Final report has been saved as 'final_report_3.md'")
 
 if __name__ == "__main__":
-    print("Running Crew...")
-    result = kickoff_crew()
-    print("Crew has been kicked off successfully.")
-    # Save the result as a markdown file
-    # with open("final_report_3.md", "w", encoding="utf-8") as f:
-    #     f.write(result.raw)
-    # print("Final report has been saved as 'final_report.md'")
+    main()
 
 
