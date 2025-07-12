@@ -1,9 +1,7 @@
 
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
-import dotenv from "dotenv";
-
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { v4: uuidv4 } = require("uuid");
+const path = require("path");
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -13,7 +11,7 @@ const s3 = new S3Client({
   },
 });
 
-export const uploadCSVToS3 = async (fileBuffer, originalName) => {
+const uploadCSVToS3 = async (fileBuffer, originalName) => {
   const fileExt = path.extname(originalName);
   const fileName = `uploads/csv/${uuidv4()}${fileExt}`;
 
@@ -32,3 +30,5 @@ export const uploadCSVToS3 = async (fileBuffer, originalName) => {
     throw new Error("Failed to upload file to S3");
   }
 };
+
+module.exports = { uploadCSVToS3 };

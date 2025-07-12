@@ -1,6 +1,7 @@
-import { uploadCSVToS3 } from "../utils/s3upload";
 
 const express = require("express");
+const { uploadCSVToS3 } = require("../utils/s3upload.js");
+const { upload } = require("../middleware/upload.js");
 const {
     registerUser,
     loginUser,
@@ -12,10 +13,9 @@ const {
     getAllUser,
     getUserDetails,
     updatePassword,
-
     updateUser,
-} = require("../controllers/userController");
-const { isAuthenticatedUser } = require("../middleware/authentication");
+} = require("../controllers/userController.js");
+const { isAuthenticatedUser } = require("../middleware/authentication.js");
 
 const router = express.Router();
 
@@ -33,7 +33,6 @@ router.post("/upload-csv", upload.single("file"), async (req, res) => {
   }
 });
 
-export default router;
 
 
 //user registration and login
