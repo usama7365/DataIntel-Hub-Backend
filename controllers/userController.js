@@ -8,6 +8,7 @@ const crypto = require("crypto");
 
 // register a user
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
+    // console.log("req.body", req.body);
     const user = await User.create(req.body);
 
 
@@ -128,8 +129,7 @@ exports.resendVerificationEmail = catchAsyncErrors(async (req, res, next) => {
 //Login user
 exports.loginUser = catchAsyncErrors(async (req, res, next) => {
     const { email, password } = req.body;
-    console.log("email", email);
-    console.log("password", password);
+  
     //checking  user has given passwrord and email both
     if (!email || !password) {
         return next(new ErrorHandler("Please Enter Email and Password", 400));
@@ -151,9 +151,7 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
     if (!isPasswordMatched) {
         return next(new ErrorHandler("invalid Email or Password", 401));
     }
-    // console.log(user);
-    const { _id, phoneNumber } = user;
-    // const user = { _id, phoneNumber };
+
     const options = {
         expires: new Date(
             Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000 // currenttime+2* 24*60*60*1000// it means it will be expired in 2 days if cookie expiry number is 2
@@ -192,6 +190,7 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
 
 //Forgot password
 exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
+    console.log("req.body", req.body.email);
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
@@ -203,7 +202,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     await user.save({ validateBeforeSave: false });
 
-    const resetPasswordUrl = `${process.env.FRONTEND_URL}/ResetPassword/${resetToken}`;
+    const resetPasswordUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
     // const resetPasswordUrl = `${req.protocol}://${req.get(
     //     "host"
     // )}/api/password/reset/${resetToken}`;

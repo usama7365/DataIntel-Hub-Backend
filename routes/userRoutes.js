@@ -1,3 +1,5 @@
+import { uploadCSVToS3 } from "../utils/s3upload";
+
 const express = require("express");
 const {
     registerUser,
@@ -9,17 +11,29 @@ const {
     resendVerificationEmail,
     getAllUser,
     getUserDetails,
-    updateProfile,
     updatePassword,
 
-    createUserProfile,
-    getUserProfile,
     updateUser,
-    updateUserProfile,
 } = require("../controllers/userController");
 const { isAuthenticatedUser } = require("../middleware/authentication");
 
 const router = express.Router();
+
+
+router.post("/upload-csv", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const s3Url = await uploadCSVToS3(req.file.buffer, req.file.originalname);
+    res.status(200).json({ message: "Uploaded successfully", url: s3Url });
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Upload failed" });
+  }
+});
+
+export default router;
 
 
 //user registration and login
