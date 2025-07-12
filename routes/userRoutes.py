@@ -11,6 +11,9 @@ from middleware.authentication import is_authenticated_user
 from utils.s3upload import upload_csv_to_local
 # Remove this import as we're implementing the logic directly in the endpoint
 from models.userModel import UserCreate, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest, UpdatePasswordRequest, ResendEmailRequest, UserUpdate
+from utils.postgres_utils import create_postgres_engine, list_postgres_tables, extract_table_data
+import uuid
+import pandas as pd
 
 user_router = APIRouter()
 
@@ -229,3 +232,67 @@ async def get_all_users(user_id: str = Depends(is_authenticated_user)):
     Get all users (admin only)
     """
     return await user_controller.get_all_users(user_id) 
+
+class PostgresConnectRequest(BaseModel):
+    host: str
+    port: int
+    dbname: str
+    user: str
+    password: str
+
+class PostgresAnalyzeRequest(PostgresConnectRequest):
+    tables: list
+
+@user_router.post("/postgres/connect")
+async def postgres_connect(payload: PostgresConnectRequest):
+    """
+    Connect to PostgreSQL and return list of table names.
+    """
+    try:
+        engine = create_postgres_engine(
+            payload.host, payload.port, payload.dbname, payload.user, payload.password
+        )
+        tables = list_postgres_tables(engine)
+        return {"tables": tables}
+    except Exception as e:
+        print(f"[POSTGRES-CONNECT] Exception: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@user_router.post("/postgres/analyze")
+async def postgres_analyze(payload: PostgresAnalyzeRequest):
+    """
+    Extract data from selected tables, save as CSV, and process with crew.py
+    """
+    try:
+        engine = create_postgres_engine(
+            payload.host, payload.port, payload.dbname, payload.user, payload.password
+        )
+        # Combine all selected tables into one DataFrame
+        dfs = []
+        for table in payload.tables:
+            df = extract_table_data(engine, table)
+            df['__table__'] = table  # Add table name column for context
+            dfs.append(df)
+        if not dfs:
+            raise HTTPException(status_code=400, detail="No tables selected or tables are empty.")
+        combined_df = pd.concat(dfs, ignore_index=True)
+        # Save to CSV in sheet_dump
+        from utils.s3upload import create_sheet_dump_directory
+        sheet_dump_dir = create_sheet_dump_directory()
+        unique_name = f"{uuid.uuid4()}.csv"
+        file_path = str(sheet_dump_dir / unique_name)
+        combined_df.to_csv(file_path, index=False)
+        # Call crew.py for analysis
+        python_result = await call_python_crew(file_path)
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "PostgreSQL table(s) analyzed successfully",
+                "fileType": "postgres",
+                "filePath": file_path,
+                "crewResult": python_result
+            }
+        )
+    except Exception as e:
+        print(f"[POSTGRES-ANALYZE] Exception: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) 
