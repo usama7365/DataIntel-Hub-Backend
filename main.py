@@ -56,10 +56,13 @@ async def health_check():
 async def global_exception_handler(request, exc):
     return error_handler(request, exc)
 
+# Get port from environment variable or default to 8091
+port = int(os.getenv("PORT", 8090))
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=port,
         reload=True
     ) 
