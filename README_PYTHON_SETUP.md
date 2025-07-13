@@ -7,6 +7,7 @@ This project has been migrated from Node.js to FastAPI (Python). Here's what you
 ## ✅ What's Been Completed
 
 1. **FastAPI Application Structure**
+
    - `main.py` - Main FastAPI application
    - `routes/userRoutes.py` - API routes
    - `controllers/userController.py` - Business logic
@@ -14,12 +15,12 @@ This project has been migrated from Node.js to FastAPI (Python). Here's what you
    - `middleware/error.py` - Error handling
    - `models/userModel.py` - User model
    - `utils/` - Utility functions (JWT, email, S3)
-
 2. **Updated Dependencies**
+
    - `requirements.txt` - Python dependencies
    - `crew.py` - Updated for FastAPI integration
-
 3. **Setup Scripts**
+
    - `setup_python_env.py` - Environment setup
    - `run_server.py` - Server runner
 
@@ -124,19 +125,29 @@ DataIntel-Hub-Backend/
 ## 🔧 Key Features
 
 ### Authentication
+
 - JWT-based authentication
 - Email verification
 - Password reset functionality
 - Role-based access control
 
 ### File Upload
+
 - CSV file upload and processing
 - Integration with CrewAI for data analysis
 - Local file storage with S3 backup option
 
+### Data Integration
+
+- Google Sheets integration
+- PostgreSQL database connection
+- Multi-source data analysis
+- Report generation and management
+
 ### API Endpoints
 
 #### User Management
+
 - `POST /api/users/register` - Register new user
 - `POST /api/users/login` - User login
 - `GET /api/users/me` - Get user details
@@ -144,17 +155,32 @@ DataIntel-Hub-Backend/
 - `PUT /api/users/password/update` - Update password
 
 #### Email Verification
+
 - `GET /api/users/verify/{token}` - Verify email
 - `POST /api/users/email/resend` - Resend verification
 
 #### Password Reset
+
 - `POST /api/users/password/forgot` - Forgot password
 - `PUT /api/users/password/reset/{token}` - Reset password
 
 #### File Upload
+
 - `POST /api/users/upload-csv` - Upload CSV for analysis
+- `POST /api/users/upload-google-sheet` - Connect Google Sheets
+- `POST /api/users/postgres/analyze` - Analyze PostgreSQL data
+
+#### Report Management
+
+- `GET /api/users/reports` - Get user reports
+- `GET /api/users/reports/analytics` - Get report analytics
+- `GET /api/users/reports/{report_id}` - Get specific report
+- `DELETE /api/users/reports/{report_id}` - Delete report
+- `PUT /api/users/reports/{report_id}` - Update report
+- `GET /api/users/reports/{report_id}/download` - Download report
 
 #### Admin Routes
+
 - `GET /api/users/admin/users` - Get all users (admin only)
 
 ## 🐛 Troubleshooting
@@ -169,6 +195,7 @@ DataIntel-Hub-Backend/
 ### Debug Mode
 
 Run with debug logging:
+
 ```bash
 uvicorn main:app --reload --log-level debug
 ```
@@ -190,7 +217,18 @@ uvicorn main:app --reload --log-level debug
 ## 🤝 Support
 
 If you encounter any issues during setup, check:
+
 1. Python version (3.8+ required)
 2. Virtual environment activation
 3. Dependencies installation
-4. Environment variables configuration 
+4. Environment variables configuration
+
+### Project Information
+
+- **Project**: DataIntel Hub
+- **Event**: RemoteBase HackFest
+- **Team**: Random
+- **Repository**: https://github.com/usama7365/DataIntel-Hub-Backend
+- **Live Demo**: https://dataintel-hub-frontend.onrender.com
+- **Documentation Version**: 1.1
+- **Last Updated**: July 2025
