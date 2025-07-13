@@ -8,7 +8,7 @@
 
 # Existing crewai dependencies
 crewai
-crewai-tools
+crewai-tools==0.51.1
 numpy
 pandas
 
