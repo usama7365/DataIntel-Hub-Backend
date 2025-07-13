@@ -41,36 +41,31 @@ pip install -r requirements.txt
 Create a `.env` file in the root directory:
 
 ```env
-# Database Configuration
-DATABASE_URL=mongodb://localhost:27017/dataintel_hub
+# Example environment variables for DataIntel-Hub-Backend
 
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRE=2d
+# OpenAI API Key
+OPENAI_API_KEY=your-openai-api-key-here
+
+# MongoDB connection URI
+MONGO_URI=your-mongodb-uri-here
+
+# Backend server port
+PORT=8090
+
+# SMTP (Email) configuration
+SMPT_SERVICE=gmail
+SMPT_MAIL=your-email@gmail.com
+SMPT_PASSWORD=your-app-password-here
+SMPT_HOST=smtp.gmail.com
+SMPT_PORT=465
+
+# JWT (Authentication) configuration
+JWT_SECRET=your-jwt-secret-here
+JWT_EXPIRE=5d
 COOKIE_EXPIRE=2
 
-# Email Configuration
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-
-# AWS Configuration
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_REGION=us-east-1
-AWS_BUCKET_NAME=your-bucket-name
-
-# OpenAI Configuration (for CrewAI)
-OPENAI_API_KEY=your-openai-api-key
-
-# Server Configuration
-HOST=0.0.0.0
-PORT=8000
-NODE_ENV=development
-
 # Frontend URL
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5173 
 ```
 
 ### 3. Run the Server
